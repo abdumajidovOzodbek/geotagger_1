@@ -25,19 +25,14 @@ interface MapViewProps {
   onRecenterRequest: () => void;
 }
 
-// Component to handle map center updates (flyTo)
-// Only reacts to changes in centerLat/centerLng, NOT lat/lng (marker pos)
 const MapController = ({ centerLat, centerLng }: { centerLat: number, centerLng: number }) => {
   const map = useMap();
-
   useEffect(() => {
     map.flyTo([centerLat, centerLng], map.getZoom());
   }, [centerLat, centerLng, map]);
-
   return null;
 };
 
-// Component to handle map clicks
 const MapClickEvent = ({ onPositionChange }: { onPositionChange: (lat: number, lng: number) => void }) => {
   useMapEvents({
     click(e) {
@@ -47,27 +42,20 @@ const MapClickEvent = ({ onPositionChange }: { onPositionChange: (lat: number, l
   return null;
 };
 
-// Component to invalidate size on fullscreen toggle
 const ResizeHandler = ({ isFullscreen }: { isFullscreen: boolean }) => {
   const map = useMap();
   useEffect(() => {
-    // Invalidate immediately to catch the size change
     map.invalidateSize();
-    
-    // Invalidate again after a short tick to ensure the browser has repainted the fixed container
     const timer = setTimeout(() => {
       map.invalidateSize();
     }, 100);
-    
     return () => clearTimeout(timer);
   }, [isFullscreen, map]);
   return null;
 };
 
-// Component for the draggable marker
 const DraggableMarker = ({ lat, lng, onPositionChange }: { lat: number, lng: number, onPositionChange: (lat: number, lng: number) => void }) => {
   const markerRef = useRef<L.Marker>(null);
-
   const eventHandlers = useMemo(
     () => ({
       dragend() {
@@ -82,14 +70,9 @@ const DraggableMarker = ({ lat, lng, onPositionChange }: { lat: number, lng: num
   );
 
   return (
-    <Marker
-      draggable={true}
-      eventHandlers={eventHandlers}
-      position={[lat, lng]}
-      ref={markerRef}
-    >
-      <Popup>
-        <span>
+    <Marker draggable={true} eventHandlers={eventHandlers} position={[lat, lng]} ref={markerRef}>
+      <Popup className="custom-popup">
+        <span className="font-sans font-semibold text-slate-900">
           Selected Location <br /> {lat.toFixed(6)}, {lng.toFixed(6)}
         </span>
       </Popup>
@@ -111,25 +94,21 @@ export const MapView: React.FC<MapViewProps> = ({
     setIsFullscreen(!isFullscreen);
   };
 
-  // Determine container classes based on fullscreen state
-  // We remove 'relative' when fixed to avoid conflicts, and use high z-index
   const containerClass = isFullscreen 
-    ? 'fixed inset-0 z-[5000] h-screen w-screen bg-slate-900' 
-    : 'relative h-full w-full bg-slate-100';
+    ? 'fixed inset-0 z-[5000] h-screen w-screen bg-black' 
+    : 'relative h-full w-full bg-zinc-900';
 
   return (
     <div className={containerClass}>
       <MapContainer 
         center={[centerLat, centerLng]} 
         zoom={13} 
-        style={{ height: "100%", width: "100%", zIndex: 0 }}
+        style={{ height: "100%", width: "100%", zIndex: 0, background: '#09090b' }}
       >
-        {/* Esri World Imagery (Satellite) */}
         <TileLayer
           attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         />
-        {/* Labels */}
         <TileLayer
           attribution=''
           url="https://stamen-tiles-{s}.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}{r}.png"
@@ -142,31 +121,31 @@ export const MapView: React.FC<MapViewProps> = ({
         <DraggableMarker lat={lat} lng={lng} onPositionChange={onPositionChange} />
       </MapContainer>
 
-      {/* Custom Controls Overlay */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-[5001]">
+      {/* Custom Controls Overlay - Dark Theme */}
+      <div className="absolute top-6 right-6 flex flex-col gap-3 z-[5001]">
         <button
           onClick={toggleFullscreen}
-          className="bg-white p-2 rounded-lg shadow-md hover:bg-slate-50 text-slate-700 transition-colors"
+          className="bg-black/80 backdrop-blur text-white p-3 rounded-xl border border-zinc-700 hover:bg-zinc-800 transition-colors shadow-xl"
           title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
         >
-          {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
+          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
         </button>
         <button
           onClick={onRecenterRequest}
-          className="bg-white p-2 rounded-lg shadow-md hover:bg-slate-50 text-slate-700 transition-colors"
+          className="bg-black/80 backdrop-blur text-white p-3 rounded-xl border border-zinc-700 hover:bg-zinc-800 transition-colors shadow-xl"
           title="Center map on marker"
         >
-          <Crosshair className="w-6 h-6" />
+          <Crosshair className="w-5 h-5" />
         </button>
       </div>
 
       {/* Info Overlay */}
-      <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-slate-200 text-xs text-slate-600 z-[5001] max-w-[200px] pointer-events-none select-none">
-        <p className="font-semibold mb-1">Satellite Mode</p>
-        <ul className="list-disc pl-3 space-y-1">
+      <div className="absolute bottom-8 left-8 bg-black/80 backdrop-blur p-4 rounded-xl shadow-2xl border border-zinc-800 text-xs text-zinc-300 z-[5001] max-w-[240px] pointer-events-none select-none">
+        <p className="font-bold text-white mb-2 uppercase tracking-widest text-[10px]">Satellite Mode</p>
+        <ul className="list-disc pl-3 space-y-1.5 opacity-80">
           <li>Click map to move pin</li>
           <li>Drag pin to adjust</li>
-          <li>Map won't jump on click</li>
+          <li>Coordinates update instantly</li>
         </ul>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { MapView } from './components/MapView';
 import { ExifEditor } from './components/ExifEditor';
 import { UploadedImage, GPSData } from './types';
 import { parseExifData } from './utils/geoUtils';
-import { Map as MapIcon, RotateCcw } from 'lucide-react';
+import { Map as MapIcon, RotateCcw, Lock, MapPin } from 'lucide-react';
 
 // Default to Tashkent, Uzbekistan
 const DEFAULT_GPS: GPSData = {
@@ -40,28 +40,21 @@ export default function App() {
           const newGps = metadata.gps;
           setCurrentGps(newGps);
           setMapCenter(newGps);
-        } else {
-          // Keep current camera/pin (Tashkent) if no GPS in image
-          // Or reset to default if desired. 
-          // For now, let's just keep the existing view context or default.
         }
       }
     };
     reader.readAsDataURL(file);
   };
 
-  // Called when user types in inputs - move Pin AND Camera
   const handleManualGpsChange = (newGps: GPSData) => {
     setCurrentGps(newGps);
     setMapCenter(newGps);
   };
 
-  // Called when user drags pin or clicks map - move Pin ONLY (Scene does not change position)
   const handleMapInteraction = (lat: number, lng: number) => {
     setCurrentGps(prev => ({ ...prev, lat, lng }));
   };
 
-  // Explicit re-center button action
   const handleRecenter = () => {
     setMapCenter(currentGps);
   };
@@ -73,19 +66,17 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50">
+    <div className="min-h-screen flex flex-col font-sans bg-black text-white selection:bg-blue-500/30">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 flex-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <MapIcon className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-              GeoTagger Tashkent
+      <header className="border-b border-zinc-800 bg-black/50 backdrop-blur-md sticky top-0 z-50 flex-none">
+        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <MapIcon className="w-6 h-6 text-white" />
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              GeoTagger <span className="text-zinc-500">Tashkent</span>
             </h1>
           </div>
-          <div className="text-sm font-medium text-slate-500">
+          <div className="text-sm font-medium text-blue-400 uppercase tracking-wider">
             Tashkent Edition
           </div>
         </div>
@@ -95,45 +86,58 @@ export default function App() {
       <main className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden">
         
         {/* Left Sidebar: Controls */}
-        <div className="flex-1 lg:flex-none w-full lg:w-[450px] min-h-0 bg-white border-r border-slate-200 overflow-y-auto p-6 z-10 flex flex-col gap-6 shadow-xl shadow-slate-200/50 order-1 lg:order-1">
+        <div className="flex-1 lg:flex-none w-full lg:w-[480px] min-h-0 bg-black border-r border-zinc-800 overflow-y-auto custom-scrollbar p-8 z-10 flex flex-col gap-8 order-1 lg:order-1">
           
           {!image ? (
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Add Location to Photos</h2>
-                <p className="text-slate-500 text-lg">Easily edit GPS data for your JPEG images.</p>
+            <div className="flex-1 flex flex-col justify-center animate-in fade-in duration-500">
+              <div className="mb-10">
+                <h2 className="text-4xl font-extrabold text-white mb-3 tracking-tight">Add Location to Photos</h2>
+                <p className="text-zinc-400 text-lg leading-relaxed">Easily edit, remove, or add GPS coordinates to your JPEG images directly in the browser.</p>
               </div>
+
               <ImageUploader onImageSelected={handleImageSelect} />
               
-              <div className="mt-12 grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                  <h3 className="font-semibold text-slate-800 mb-1">🔒 100% Private</h3>
-                  <p className="text-sm text-slate-500">Photos never leave your device.</p>
+              <div className="mt-12 space-y-6">
+                <div className="flex gap-4 items-start">
+                  <div className="bg-zinc-900 p-2 rounded-lg">
+                    <Lock className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-lg">100% Private</h3>
+                    <p className="text-sm text-zinc-500 mt-1">Photos are processed locally. They never leave your device.</p>
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                  <h3 className="font-semibold text-slate-800 mb-1">📍 Tashkent Map</h3>
-                  <p className="text-sm text-slate-500">High-res satellite imagery.</p>
+                
+                <div className="flex gap-4 items-start">
+                  <div className="bg-zinc-900 p-2 rounded-lg">
+                    <MapPin className="w-5 h-5 text-pink-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-lg">Tashkent Map</h3>
+                    <p className="text-sm text-zinc-500 mt-1">Integrated high-resolution satellite imagery.</p>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-800">Editor</h3>
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+                <h3 className="text-xl font-bold text-white">Editor</h3>
                 <button 
                   onClick={resetApp}
-                  className="text-sm text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors"
+                  className="text-xs font-medium text-zinc-500 hover:text-white flex items-center gap-2 transition-colors uppercase tracking-wider bg-zinc-900 px-3 py-1.5 rounded-md"
                 >
                   <RotateCcw className="w-3 h-3" /> Start Over
                 </button>
               </div>
 
               {/* Thumbnail */}
-              <div className="relative aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-inner shrink-0">
+              <div className="relative aspect-video bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl shrink-0 group">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <img 
                   src={image.previewUrl} 
                   alt="Preview" 
-                  className="w-full h-full object-contain" 
+                  className="w-full h-full object-contain relative z-10" 
                 />
               </div>
 
@@ -145,15 +149,15 @@ export default function App() {
             </>
           )}
 
-          <div className="mt-auto pt-6 text-center">
-            <p className="text-xs text-slate-400">
-              Built with React, Leaflet & Piexifjs
+          <div className="mt-auto pt-6 border-t border-zinc-900">
+            <p className="text-xs text-zinc-600 text-center font-mono">
+              GeoTagger Pro v1.0 • Client-side Processing
             </p>
           </div>
         </div>
 
         {/* Right Content: Map */}
-        <div className="flex-none lg:flex-1 h-[40vh] lg:h-full relative bg-slate-900 border-t lg:border-t-0 border-slate-200 order-2 lg:order-2">
+        <div className="flex-none lg:flex-1 h-[40vh] lg:h-full relative bg-zinc-900 border-t lg:border-t-0 border-zinc-800 order-2 lg:order-2">
           <MapView 
             lat={currentGps.lat} 
             lng={currentGps.lng}
