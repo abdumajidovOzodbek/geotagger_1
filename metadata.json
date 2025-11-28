@@ -1,0 +1,7 @@
+{
+  "name": "GeoTagger Pro",
+  "description": "A professional browser-based tool to view, edit, and add GPS EXIF metadata to JPEG images locally.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
