@@ -51,7 +51,15 @@ const MapClickEvent = ({ onPositionChange }: { onPositionChange: (lat: number, l
 const ResizeHandler = ({ isFullscreen }: { isFullscreen: boolean }) => {
   const map = useMap();
   useEffect(() => {
+    // Invalidate immediately to catch the size change
     map.invalidateSize();
+    
+    // Invalidate again after a short tick to ensure the browser has repainted the fixed container
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [isFullscreen, map]);
   return null;
 };
@@ -103,8 +111,14 @@ export const MapView: React.FC<MapViewProps> = ({
     setIsFullscreen(!isFullscreen);
   };
 
+  // Determine container classes based on fullscreen state
+  // We remove 'relative' when fixed to avoid conflicts, and use high z-index
+  const containerClass = isFullscreen 
+    ? 'fixed inset-0 z-[5000] h-screen w-screen bg-slate-900' 
+    : 'relative h-full w-full bg-slate-100';
+
   return (
-    <div className={`relative h-full w-full transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-[1000]' : ''}`}>
+    <div className={containerClass}>
       <MapContainer 
         center={[centerLat, centerLng]} 
         zoom={13} 
@@ -129,7 +143,7 @@ export const MapView: React.FC<MapViewProps> = ({
       </MapContainer>
 
       {/* Custom Controls Overlay */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-[1001]">
+      <div className="absolute top-4 right-4 flex flex-col gap-2 z-[5001]">
         <button
           onClick={toggleFullscreen}
           className="bg-white p-2 rounded-lg shadow-md hover:bg-slate-50 text-slate-700 transition-colors"
@@ -147,7 +161,7 @@ export const MapView: React.FC<MapViewProps> = ({
       </div>
 
       {/* Info Overlay */}
-      <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-slate-200 text-xs text-slate-600 z-[1001] max-w-[200px] pointer-events-none select-none">
+      <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-slate-200 text-xs text-slate-600 z-[5001] max-w-[200px] pointer-events-none select-none">
         <p className="font-semibold mb-1">Satellite Mode</p>
         <ul className="list-disc pl-3 space-y-1">
           <li>Click map to move pin</li>
